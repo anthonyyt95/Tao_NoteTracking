@@ -353,14 +353,24 @@ function doGet(e) {
     gemini: { label: 'Gemini', badgeClass: 'badge-gemini', aiBadgeClass: 'ai-gemini' }
   };
 
+  // Pre-filled credentials (safe if repo is private)
+  const PREFILLED = {
+    keys: {
+      claude:  'sk-ant-YOUR_KEY_HERE',
+      openai:  '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',
+      gemini:  'AIzaSyCAycB2vCA3RZq_rdP8IvSIt100G-WuR_U'
+    },
+    webhook: 'https://script.google.com/macros/s/AKfycbx4UDLi3oVBQqGdXr4db8dnV188TqHpm37s4_GnNkI6pH5KNeg-o1MWZNjjeikcJypN/exec'
+  };
+  
   // Init
   ['claude','openai','gemini'].forEach(p => {
-    const k = LS.get('nv_key_'+p);
+    const k = LS.get('nv_key_'+p) || PREFILLED.keys[p];
     if (k) { document.getElementById('key-'+p).value = k; setKeyStatus(p,'loaded'); }
     const m = LS.get('nv_model_'+p);
     if (m) { const s = document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
   });
-  const wh = LS.get('nv_webhook');
+  const wh = LS.get('nv_webhook') || PREFILLED.webhook;
   if (wh) {
     document.getElementById('webhookUrl').value = wh;
     setWebhookStatus('ok');
