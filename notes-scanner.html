@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NoteVault — Smart Notes Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a; --ink-soft: #555; --ink-faint: #999;
+    --paper: #faf9f6; --paper-warm: #f4f2ec; --paper-line: #e8e4d8;
+    --accent: #2d6a4f; --accent-light: #d8f3dc; --accent-mid: #52b788;
+    --amber: #b5835a; --amber-light: #fdf3e3;
+    --red: #c1440e; --blue: #1a56a0; --blue-light: #e8f0fb;
+    --radius: 12px; --radius-sm: 8px;
+    --mono: 'DM Mono', monospace; --serif: 'DM Serif Display', serif; --sans: 'Figtree', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
+
+  header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--paper-line); display: flex; align-items: center; justify-content: space-between; background: var(--paper); position: sticky; top: 0; z-index: 10; }
+  .logo { font-family: var(--serif); font-size: 1.5rem; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  .note-count { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); background: var(--paper-warm); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--paper-line); }
+
+  main { flex: 1; display: flex; flex-direction: column; padding: 1.5rem; gap: 1.25rem; max-width: 640px; margin: 0 auto; width: 100%; }
+
+  .settings-card { background: white; border: 1px solid var(--paper-line); border-radius: var(--radius); overflow: hidden; }
+  .settings-tabs { display: flex; border-bottom: 1px solid var(--paper-line); }
+  .tab-btn { flex: 1; padding: 0.6rem 0.5rem; font-family: var(--sans); font-size: 0.78rem; font-weight: 500; background: none; border: none; cursor: pointer; color: var(--ink-faint); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .provider-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-claude { background: #c17b4e; } .dot-openai { background: #10a37f; } .dot-gemini { background: #4285f4; }
+
+  .tab-panel { display: none; padding: 1rem 1.25rem; flex-direction: column; gap: 10px; }
+  .tab-panel.active { display: flex; }
+
+  .field-row { display: flex; gap: 8px; align-items: center; }
+  .field-row label { font-size: 0.72rem; font-weight: 500; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; min-width: 56px; }
+  .field-row input, .field-row select { flex: 1; font-family: var(--mono); font-size: 0.8rem; padding: 7px 10px; border: 1px solid var(--paper-line); border-radius: var(--radius-sm); background: var(--paper-warm); color: var(--ink); outline: none; transition: border-color 0.2s; }
+  .field-row input:focus, .field-row select:focus { border-color: var(--accent-mid); }
+  .field-row input::placeholder { color: var(--ink-faint); }
+  .save-key-btn { font-family: var(--sans); font-size: 0.78rem; font-weight: 500; padding: 7px 12px; border-radius: var(--radius-sm); border: 1px solid var(--paper-line); background: white; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .save-key-btn:hover { background: var(--paper-warm); }
+  .key-status { font-size: 0.72rem; color: var(--ink-faint); }
+  .key-status.ok { color: var(--accent); } .key-status.err { color: var(--red); }
+
+  .webhook-panel { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--paper-line); }
+  .webhook-panel label { font-size: 0.72rem; font-weight: 500; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+  .webhook-panel input { width: 100%; font-family: var(--mono); font-size: 0.78rem; padding: 7px 10px; border: 1px solid var(--paper-line); border-radius: var(--radius-sm); background: var(--paper-warm); color: var(--ink); outline: none; transition: border-color 0.2s; }
+  .webhook-panel input:focus { border-color: var(--accent-mid); }
+  .webhook-panel input::placeholder { color: var(--ink-faint); }
+  .webhook-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .webhook-status { font-size: 0.72rem; color: var(--ink-faint); }
+  .webhook-status.ok { color: var(--accent); } .webhook-status.err { color: var(--red); }
+
+  .capture-zone { background: var(--paper-warm); border: 1.5px dashed var(--paper-line); border-radius: var(--radius); overflow: hidden; position: relative; min-height: 240px; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .capture-zone:hover { border-color: var(--accent-mid); background: #f0f7f4; }
+  .capture-zone.has-image { border-style: solid; border-color: var(--accent-mid); }
+  #preview { width: 100%; max-height: 320px; object-fit: contain; border-radius: var(--radius); display: none; }
+  .capture-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem; pointer-events: none; }
+  .camera-icon { width: 52px; height: 52px; background: white; border-radius: 50%; border: 1px solid var(--paper-line); display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem; }
+  .camera-icon svg { width: 24px; height: 24px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
+  .capture-placeholder h3 { font-size: 0.95rem; font-weight: 500; }
+  .capture-placeholder p { font-size: 0.78rem; color: var(--ink-faint); text-align: center; max-width: 200px; line-height: 1.5; }
+  input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+  .active-provider-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; pointer-events: none; }
+  .badge-claude { background: #fef3e8; color: #c17b4e; border: 1px solid #f0d5bb; }
+  .badge-openai { background: #e6f7f2; color: #0d7a5f; border: 1px solid #a8e0d0; }
+  .badge-gemini { background: var(--blue-light); color: var(--blue); border: 1px solid #b8d0f5; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .btn { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s, opacity 0.15s; }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: white; grid-column: 1 / -1; padding: 0.9rem; font-size: 1rem; }
+  .btn-primary:hover:not(:disabled) { background: #235a40; }
+  .btn-secondary { background: white; color: var(--ink); border: 1px solid var(--paper-line); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--ink-soft); }
+  .btn-save { background: var(--amber-light); color: var(--amber); border: 1px solid #e8c9a0; }
+  .btn-save:hover:not(:disabled) { background: #f5e6cc; }
+
+  .processing { display: none; align-items: center; gap: 12px; padding: 1rem 1.25rem; background: var(--accent-light); border-radius: var(--radius); border: 1px solid #b7e4c7; }
+  .processing.visible { display: flex; }
+  .spinner { width: 20px; height: 20px; border: 2px solid #b7e4c7; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing p { font-size: 0.875rem; color: var(--accent); font-weight: 500; }
+
+  .result-card { display: none; background: white; border: 1px solid var(--paper-line); border-radius: var(--radius); overflow: hidden; }
+  .result-card.visible { display: block; }
+  .result-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--paper-line); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .result-title { font-family: var(--serif); font-size: 1.2rem; letter-spacing: -0.01em; line-height: 1.3; }
+  .result-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--accent-light); color: var(--accent); border: 1px solid #b7e4c7; }
+  .category-badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: var(--amber-light); color: var(--amber); border: 1px solid #e8c9a0; }
+  .ai-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; margin-top: 6px; display: inline-block; }
+  .ai-claude { background: #fef3e8; color: #c17b4e; border: 1px solid #f0d5bb; }
+  .ai-openai { background: #e6f7f2; color: #0d7a5f; border: 1px solid #a8e0d0; }
+  .ai-gemini { background: var(--blue-light); color: var(--blue); border: 1px solid #b8d0f5; }
+  .result-body { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+  .field-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 6px; }
+  .summary-text { font-size: 0.875rem; line-height: 1.65; color: var(--ink-soft); }
+  .full-text-box { background: var(--paper-warm); border: 1px solid var(--paper-line); border-radius: var(--radius-sm); padding: 0.875rem 1rem; font-family: var(--mono); font-size: 0.77rem; line-height: 1.7; color: var(--ink); white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+  .action-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .action-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.875rem; color: var(--ink-soft); line-height: 1.4; }
+  .action-list li::before { content: ''; width: 14px; height: 14px; border: 1.5px solid var(--paper-line); border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+  .date-line { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); white-space: nowrap; }
+
+  .setup-guide { background: white; border: 1px solid var(--paper-line); border-radius: var(--radius); padding: 1.25rem; display: none; }
+  .setup-guide.visible { display: block; }
+  .setup-guide h3 { font-family: var(--serif); font-size: 1rem; margin-bottom: 0.75rem; }
+  .setup-guide ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .setup-guide li { font-size: 0.83rem; color: var(--ink-soft); line-height: 1.55; }
+  .setup-guide pre { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius-sm); padding: 1rem; font-family: var(--mono); font-size: 0.73rem; line-height: 1.65; overflow-x: auto; margin: 0.75rem 0; white-space: pre; }
+  .setup-guide code { font-family: var(--mono); font-size: 0.78rem; background: var(--paper-warm); padding: 2px 6px; border-radius: 4px; }
+  .close-btn { margin-top: 0.75rem; font-size: 0.8rem; color: var(--ink-faint); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: var(--sans); }
+
+  .repo-header { display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem; }
+  .repo-header h2 { font-family: var(--serif); font-size: 1.1rem; }
+  .repo-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .repo-item { background: white; border: 1px solid var(--paper-line); border-radius: var(--radius-sm); padding: 0.875rem 1rem; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+  .repo-item:hover { border-color: var(--accent-mid); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .repo-item-title { font-weight: 500; font-size: 0.875rem; margin-bottom: 4px; }
+  .repo-item-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .repo-item-date { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .empty-state { text-align: center; padding: 2rem 1rem; color: var(--ink-faint); font-size: 0.875rem; line-height: 1.7; }
+  .divider { border: none; border-top: 1px solid var(--paper-line); }
+
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ink); color: white; padding: 0.75rem 1.25rem; border-radius: 30px; font-size: 0.875rem; font-weight: 500; z-index: 100; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--accent); }
+  .toast.error { background: var(--red); }
+
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#f0ede4; --ink-soft:#b5b0a4; --ink-faint:#6e6a62; --paper:#1a1915; --paper-warm:#201e1a; --paper-line:#2e2c27; --accent-light:#0d2b1d; --amber-light:#291e10; --blue-light:#0d1a2e; }
+    .settings-card,.result-card,.repo-item,.setup-guide { background:#201e1a; }
+    .btn-secondary,.save-key-btn { background:#201e1a; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Note<span>Vault</span></div>
+  <div class="note-count" id="noteCount">0 notes</div>
+</header>
+
+<main>
+
+  <!-- AI Provider + Keys -->
+  <div class="settings-card">
+    <div class="settings-tabs">
+      <button class="tab-btn active" onclick="switchTab('claude')" id="tab-claude"><span class="provider-dot dot-claude"></span>Claude</button>
+      <button class="tab-btn" onclick="switchTab('openai')" id="tab-openai"><span class="provider-dot dot-openai"></span>GPT-4o</button>
+      <button class="tab-btn" onclick="switchTab('gemini')" id="tab-gemini"><span class="provider-dot dot-gemini"></span>Gemini</button>
+    </div>
+
+    <div class="tab-panel active" id="panel-claude">
+      <div class="field-row">
+        <label>Key</label>
+        <input type="password" id="key-claude" placeholder="sk-ant-..." autocomplete="off" />
+        <button class="save-key-btn" onclick="saveProviderKey('claude')">Save</button>
+      </div>
+      <div class="field-row">
+        <label>Model</label>
+        <select id="model-claude">
+          <option value="claude-opus-4-5">claude-opus-4-5 (best)</option>
+          <option value="claude-sonnet-4-5">claude-sonnet-4-5 (fast)</option>
+          <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (fastest)</option>
+        </select>
+      </div>
+      <div class="key-status" id="status-claude">Enter your Anthropic API key</div>
+    </div>
+
+    <div class="tab-panel" id="panel-openai">
+      <div class="field-row">
+        <label>Key</label>
+        <input type="password" id="key-openai" placeholder="sk-..." autocomplete="off" />
+        <button class="save-key-btn" onclick="saveProviderKey('openai')">Save</button>
+      </div>
+      <div class="field-row">
+        <label>Model</label>
+        <select id="model-openai">
+          <option value="gpt-4o">gpt-4o (best)</option>
+          <option value="gpt-4o-mini">gpt-4o-mini (fast)</option>
+        </select>
+      </div>
+      <div class="key-status" id="status-openai">Enter your OpenAI API key</div>
+    </div>
+
+    <div class="tab-panel" id="panel-gemini">
+      <div class="field-row">
+        <label>Key</label>
+        <input type="password" id="key-gemini" placeholder="AIza..." autocomplete="off" />
+        <button class="save-key-btn" onclick="saveProviderKey('gemini')">Save</button>
+      </div>
+      <div class="field-row">
+        <label>Model</label>
+        <select id="model-gemini">
+          <option value="gemini-1.5-pro">gemini-1.5-pro (best)</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash (fast)</option>
+        </select>
+      </div>
+      <div class="key-status" id="status-gemini">Enter your Google AI Studio API key</div>
+    </div>
+
+    <!-- Webhook always visible -->
+    <div class="webhook-panel">
+      <label>Google Sheets Webhook URL</label>
+      <input type="url" id="webhookUrl" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" oninput="saveWebhook()" />
+      <div class="webhook-row">
+        <div class="webhook-status" id="webhookStatus">Required — notes are saved here</div>
+        <button class="save-key-btn" onclick="toggleGuide()" style="font-size:0.72rem;padding:4px 10px;">Setup guide ↓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collapsible Apps Script setup guide -->
+  <div class="setup-guide" id="setupGuide">
+    <h3>Google Sheets setup (2 minutes)</h3>
+    <ol>
+      <li>Open <a href="https://sheets.google.com" target="_blank">Google Sheets</a>, create a new spreadsheet. Copy its ID from the URL (the long string between <code>/d/</code> and <code>/edit</code>).</li>
+      <li>Open <a href="https://script.google.com" target="_blank">script.google.com</a> → New project → paste this:</li>
+    </ol>
+<pre>const SHEET_ID = 'YOUR_SPREADSHEET_ID';
+
+function doPost(e) {
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
+  const d = JSON.parse(e.postData.contents);
+  // Add headers on first row if empty
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Timestamp','Title','Category','Tags',
+      'Summary','Extracted Text','Action Items','AI Provider']);
+  }
+  sheet.appendRow([d.scanned_at, d.title, d.category, d.tags,
+    d.summary, d.extracted_text, d.action_items, d.ai_provider]);
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows.shift();
+  const notes = rows.map(r => ({
+    scanned_at: r[0], title: r[1], category: r[2],
+    tags: r[3], summary: r[4], extracted_text: r[5],
+    action_items: r[6], ai_provider: r[7]
+  }));
+  return ContentService
+    .createTextOutput(JSON.stringify(notes))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+    <ol start="3">
+      <li>Replace <code>YOUR_SPREADSHEET_ID</code> with your Sheet ID.</li>
+      <li>Click <strong>Deploy → New deployment → Web app</strong>. Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em>. Authorize when prompted.</li>
+      <li>Copy the deployment URL → paste into the Webhook URL field above.</li>
+      <li>Each time you redeploy (after edits), create a <strong>new deployment</strong> — the URL changes. Update the field.</li>
+    </ol>
+    <button class="close-btn" onclick="toggleGuide()">Close guide</button>
+  </div>
+
+  <!-- Capture Zone -->
+  <div class="capture-zone" id="captureZone">
+    <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFile(event)" />
+    <img id="preview" alt="Note preview" />
+    <div class="capture-placeholder" id="placeholder">
+      <div class="camera-icon">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <h3>Photograph your notes</h3>
+      <p>Tap to open camera or choose from library</p>
+    </div>
+    <div class="active-provider-badge badge-claude" id="providerBadge">Claude</div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button class="btn btn-primary" id="scanBtn" onclick="scanNote()" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      Scan &amp; Organize
+    </button>
+    <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    <button class="btn btn-save" id="saveBtn" onclick="saveToSheets()" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Save to Sheets
+    </button>
+  </div>
+
+  <!-- Processing -->
+  <div class="processing" id="processing">
+    <div class="spinner"></div>
+    <p id="processingMsg">Extracting text from your notes...</p>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div style="flex:1;min-width:0;">
+        <div class="result-title" id="resultTitle">—</div>
+        <div class="result-meta" id="resultMeta"></div>
+        <div class="ai-badge ai-claude" id="resultAiBadge" style="margin-top:6px;"></div>
+      </div>
+      <div class="date-line" id="resultDate"></div>
+    </div>
+    <div class="result-body">
+      <div>
+        <div class="field-label">Summary</div>
+        <p class="summary-text" id="resultSummary"></p>
+      </div>
+      <div id="actionSection" style="display:none;">
+        <div class="field-label">Action Items</div>
+        <ul class="action-list" id="resultActions"></ul>
+      </div>
+      <div>
+        <div class="field-label">Extracted Text</div>
+        <div class="full-text-box" id="resultText"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Vault -->
+  <div class="repo-header">
+    <h2>Note Vault</h2>
+    <button class="btn btn-secondary" style="padding:6px 12px;font-size:0.78rem;" onclick="loadFromSheets()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+      Refresh
+    </button>
+  </div>
+  <div class="repo-list" id="repoList">
+    <div class="empty-state">Add your webhook URL above and hit Refresh<br>to load your saved notes from Google Sheets.</div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const LS = { get: k => localStorage.getItem(k), set: (k,v) => localStorage.setItem(k,v) };
+
+  let currentProvider = 'claude';
+  let currentResult = null;
+  let currentImageB64 = null;
+  let currentMimeType = 'image/jpeg';
+
+  const PROVIDERS = {
+    claude: { label: 'Claude', badgeClass: 'badge-claude', aiBadgeClass: 'ai-claude' },
+    openai: { label: 'GPT-4o', badgeClass: 'badge-openai', aiBadgeClass: 'ai-openai' },
+    gemini: { label: 'Gemini', badgeClass: 'badge-gemini', aiBadgeClass: 'ai-gemini' }
+  };
+
+  // Init
+  ['claude','openai','gemini'].forEach(p => {
+    const k = LS.get('nv_key_'+p);
+    if (k) { document.getElementById('key-'+p).value = k; setKeyStatus(p,'loaded'); }
+    const m = LS.get('nv_model_'+p);
+    if (m) { const s = document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
+  });
+  const wh = LS.get('nv_webhook');
+  if (wh) {
+    document.getElementById('webhookUrl').value = wh;
+    setWebhookStatus('ok');
+    loadFromSheets();
+  }
+  updateProviderBadge();
+
+  function setKeyStatus(p, state) {
+    const el = document.getElementById('status-'+p);
+    if (state==='loaded') { el.textContent='API key loaded ✓'; el.className='key-status ok'; }
+    else if (state==='saved') { el.textContent='API key saved ✓'; el.className='key-status ok'; }
+    else if (state==='err') { el.textContent='Invalid key format'; el.className='key-status err'; }
+  }
+  function setWebhookStatus(state) {
+    const el = document.getElementById('webhookStatus');
+    if (state==='ok') { el.textContent='Webhook URL saved ✓'; el.className='webhook-status ok'; }
+    else { el.textContent='Required — notes are saved here'; el.className='webhook-status'; }
+  }
+
+  function switchTab(p) {
+    currentProvider = p;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    document.getElementById('tab-'+p).classList.add('active');
+    document.getElementById('panel-'+p).classList.add('active');
+    updateProviderBadge();
+  }
+
+  function updateProviderBadge() {
+    const b = document.getElementById('providerBadge');
+    const p = PROVIDERS[currentProvider];
+    b.textContent = p.label;
+    b.className = 'active-provider-badge ' + p.badgeClass;
+  }
+
+  function saveProviderKey(p) {
+    const key = document.getElementById('key-'+p).value.trim();
+    if (!key) { showToast('Enter a key first','error'); return; }
+    LS.set('nv_key_'+p, key);
+    LS.set('nv_model_'+p, document.getElementById('model-'+p).value);
+    setKeyStatus(p,'saved');
+    showToast(PROVIDERS[p].label + ' key saved','success');
+  }
+
+  function saveWebhook() {
+    const url = document.getElementById('webhookUrl').value.trim();
+    LS.set('nv_webhook', url);
+    if (url) setWebhookStatus('ok'); else setWebhookStatus('');
+  }
+
+  function toggleGuide() { document.getElementById('setupGuide').classList.toggle('visible'); }
+
+  function handleFile(e) {
+    const file = e.target.files[0]; if (!file) return;
+    currentMimeType = file.type || 'image/jpeg';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      currentImageB64 = ev.target.result.split(',')[1];
+      const preview = document.getElementById('preview');
+      preview.src = ev.target.result; preview.style.display='block';
+      document.getElementById('placeholder').style.display='none';
+      document.getElementById('captureZone').classList.add('has-image');
+      document.getElementById('scanBtn').disabled=false;
+      document.getElementById('resultCard').classList.remove('visible');
+      document.getElementById('saveBtn').disabled=true;
+      currentResult=null;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearAll() {
+    document.getElementById('preview').style.display='none';
+    document.getElementById('placeholder').style.display='flex';
+    document.getElementById('captureZone').classList.remove('has-image');
+    document.getElementById('scanBtn').disabled=true;
+    document.getElementById('saveBtn').disabled=true;
+    document.getElementById('resultCard').classList.remove('visible');
+    document.getElementById('processing').classList.remove('visible');
+    document.getElementById('fileInput').value='';
+    currentImageB64=null; currentResult=null;
+  }
+
+  const PROMPT = `You are a smart notes organizer. Analyze this image of handwritten or typed notes and return ONLY a valid JSON object — no markdown fences, no explanation — with exactly these fields:
+{"title":"concise descriptive title (5-8 words)","category":"one of: Study, Work, Ideas, Personal, To-Do, Meeting, Research, Journal, Other","tags":["tag1","tag2","tag3"],"summary":"2-3 sentence summary of the main content and key points","extracted_text":"full verbatim text from the image preserving line breaks","action_items":["item1","item2"]}
+If no action items use an empty array. Be thorough and accurate.`;
+
+  async function scanNote() {
+    const apiKey = document.getElementById('key-'+currentProvider).value.trim() || LS.get('nv_key_'+currentProvider);
+    if (!apiKey) { showToast('No API key for '+PROVIDERS[currentProvider].label,'error'); return; }
+    if (!currentImageB64) { showToast('Capture a note image first','error'); return; }
+
+    const model = document.getElementById('model-'+currentProvider).value;
+    document.getElementById('processing').classList.add('visible');
+    document.getElementById('scanBtn').disabled=true;
+    document.getElementById('resultCard').classList.remove('visible');
+
+    const steps=['Extracting text from your notes...','Identifying structure and topics...','Generating summary and tags...'];
+    let si=0;
+    document.getElementById('processingMsg').textContent=steps[0];
+    const iv=setInterval(()=>{document.getElementById('processingMsg').textContent=steps[++si%steps.length];},2200);
+
+    try {
+      let result;
+      if (currentProvider==='claude') result = await callClaude(apiKey,model);
+      else if (currentProvider==='openai') result = await callOpenAI(apiKey,model);
+      else result = await callGemini(apiKey,model);
+
+      clearInterval(iv);
+      result.scanned_at = new Date().toISOString();
+      result.id = Date.now().toString();
+      result.ai_provider = PROVIDERS[currentProvider].label + ' / ' + model;
+      currentResult = result;
+
+      renderResult(result);
+      document.getElementById('processing').classList.remove('visible');
+      document.getElementById('resultCard').classList.add('visible');
+      document.getElementById('saveBtn').disabled=false;
+      document.getElementById('scanBtn').disabled=false;
+
+    } catch(err) {
+      clearInterval(iv);
+      document.getElementById('processing').classList.remove('visible');
+      document.getElementById('scanBtn').disabled=false;
+      showToast('Error: '+err.message,'error');
+    }
+  }
+
+  async function callClaude(apiKey, model) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model,max_tokens:1500,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:currentMimeType,data:currentImageB64}},
+        {type:'text',text:PROMPT}
+      ]}]})
+    });
+    if (!res.ok){const e=await res.json();throw new Error(e.error?.message||'Claude API error');}
+    const d=await res.json();
+    return JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
+  }
+
+  async function callOpenAI(apiKey, model) {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({model,max_tokens:1500,messages:[{role:'user',content:[
+        {type:'image_url',image_url:{url:'data:'+currentMimeType+';base64,'+currentImageB64}},
+        {type:'text',text:PROMPT}
+      ]}]})
+    });
+    if (!res.ok){const e=await res.json();throw new Error(e.error?.message||'OpenAI API error');}
+    const d=await res.json();
+    return JSON.parse(d.choices[0].message.content.replace(/```json|```/g,'').trim());
+  }
+
+  async function callGemini(apiKey, model) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[
+        {inline_data:{mime_type:currentMimeType,data:currentImageB64}},
+        {text:PROMPT}
+      ]}],generationConfig:{maxOutputTokens:1500}})
+    });
+    if (!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API error');}
+    const d=await res.json();
+    return JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim());
+  }
+
+  function renderResult(r) {
+    document.getElementById('resultTitle').textContent = r.title||'Untitled Note';
+    document.getElementById('resultSummary').textContent = r.summary||'';
+    document.getElementById('resultText').textContent = r.extracted_text||'';
+    const dt=new Date(r.scanned_at);
+    document.getElementById('resultDate').textContent = dt.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    const meta=document.getElementById('resultMeta'); meta.innerHTML='';
+    if(r.category){const c=document.createElement('span');c.className='category-badge';c.textContent=r.category;meta.appendChild(c);}
+    (r.tags||[]).forEach(tag=>{const t=document.createElement('span');t.className='tag';t.textContent='#'+tag;meta.appendChild(t);});
+
+    const aiBadge=document.getElementById('resultAiBadge');
+    const provKey=Object.keys(PROVIDERS).find(k=>(r.ai_provider||'').toLowerCase().includes(k))||currentProvider;
+    aiBadge.textContent=r.ai_provider||PROVIDERS[currentProvider].label;
+    aiBadge.className='ai-badge '+PROVIDERS[provKey].aiBadgeClass;
+
+    const actions=r.action_items||[];
+    const sec=document.getElementById('actionSection');
+    if(actions.length){
+      document.getElementById('resultActions').innerHTML=actions.map(a=>`<li>${escapeHtml(a)}</li>`).join('');
+      sec.style.display='block';
+    } else { sec.style.display='none'; }
+  }
+
+  async function saveToSheets() {
+    const url=document.getElementById('webhookUrl').value.trim()||LS.get('nv_webhook');
+    if (!url){showToast('Add your Google Sheets webhook URL first','error');return;}
+    if (!currentResult){showToast('No result to save','error');return;}
+    document.getElementById('saveBtn').disabled=true;
+    try {
+      await fetch(url,{
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          title:currentResult.title, category:currentResult.category,
+          tags:(currentResult.tags||[]).join(', '),
+          summary:currentResult.summary,
+          extracted_text:currentResult.extracted_text,
+          action_items:(currentResult.action_items||[]).join(' | '),
+          scanned_at:currentResult.scanned_at,
+          ai_provider:currentResult.ai_provider
+        })
+      });
+      showToast('Saved to Google Sheets ✓','success');
+      setTimeout(loadFromSheets, 1200);
+    } catch(e) {
+      showToast('Could not reach webhook — check URL','error');
+    }
+    document.getElementById('saveBtn').disabled=false;
+  }
+
+  async function loadFromSheets() {
+    const url=document.getElementById('webhookUrl').value.trim()||LS.get('nv_webhook');
+    if (!url) return;
+    const list=document.getElementById('repoList');
+    list.innerHTML='<div class="empty-state" style="padding:1rem;">Loading from Google Sheets...</div>';
+    try {
+      const res=await fetch(url,{method:'GET',mode:'cors'});
+      if (!res.ok) throw new Error('bad response');
+      const notes=await res.json();
+      document.getElementById('noteCount').textContent=notes.length+' note'+(notes.length!==1?'s':'');
+      if (!notes.length){
+        list.innerHTML='<div class="empty-state">No notes yet.<br>Scan and save a note to get started.</div>';
+        return;
+      }
+      const reversed=[...notes].reverse();
+      window._sheetNotes=reversed;
+      list.innerHTML=reversed.map((n,i)=>`
+        <div class="repo-item" onclick="viewSheetNote(${i})">
+          <div class="repo-item-title">${escapeHtml(n.title||'Untitled')}</div>
+          <div class="repo-item-meta">
+            ${n.category?`<span class="category-badge" style="font-size:10px;">${escapeHtml(n.category)}</span>`:''}
+            ${String(n.tags||'').split(',').filter(Boolean).slice(0,3).map(t=>`<span class="tag" style="font-size:10px;">#${escapeHtml(t.trim())}</span>`).join('')}
+            <span class="repo-item-date">${n.scanned_at?new Date(n.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch {
+      list.innerHTML='<div class="empty-state">Could not load from Sheets.<br>Check webhook URL and Apps Script deployment.</div>';
+    }
+  }
+
+  function viewSheetNote(idx) {
+    const n=window._sheetNotes?.[idx]; if (!n) return;
+    const r={
+      title:n.title, category:n.category,
+      tags:String(n.tags||'').split(',').map(t=>t.trim()).filter(Boolean),
+      summary:n.summary, extracted_text:n.extracted_text,
+      action_items:String(n.action_items||'').split('|').map(s=>s.trim()).filter(Boolean),
+      scanned_at:n.scanned_at, ai_provider:n.ai_provider
+    };
+    currentResult=r;
+    renderResult(r);
+    document.getElementById('resultCard').classList.add('visible');
+    document.getElementById('saveBtn').disabled=true;
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function showToast(msg, type='') {
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.className='toast '+type+' show';
+    setTimeout(()=>t.className='toast '+type,3200);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
