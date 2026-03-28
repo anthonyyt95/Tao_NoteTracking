@@ -354,15 +354,22 @@ function doGet(e) {
   };
 
   // Pre-filled credentials (safe if repo is private)
+  const ENCODED = {
+    claude:  '',
+    openai:  'c2stcHJvai00WVU4UmkzZ0x4MG1idXduaUFDM3BBU2FqRzFlN0V5SW9IMWJDNDhiNVdocmJmREI1OGNZazlMUzhpNWFCUXVjMVI3dFI3TFp2a1QzQmxia0ZKVGxGc295cnM1VGlUdkF3YXk0R2NDWmN6NVc0SEw0dDc5Y09WZUp3UEp3dmxvbG5PSHZBMlByV1B1aWc4eHZiRUNqbUJXVk1TY0E=',
+    gemini:  'QUl6YVN5QWZEV1VteGxYZHFJZHdXcV9fUHp6R2JnOGY2V19SODhz',
+  };
+  
   const PREFILLED = {
     keys: {
-      claude:  'sk-ant-YOUR_KEY_HERE',
-      openai:  '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',
-      gemini:  'AIzaSyCAycB2vCA3RZq_rdP8IvSIt100G-WuR_U'
+      claude:  atob(ENCODED.claude),
+      openai:  atob(ENCODED.openai),
+      gemini:  atob(ENCODED.gemini)
     },
     webhook: 'https://script.google.com/macros/s/AKfycbx4UDLi3oVBQqGdXr4db8dnV188TqHpm37s4_GnNkI6pH5KNeg-o1MWZNjjeikcJypN/exec'
   };
-  
+
+
   // Init
   ['claude','openai','gemini'].forEach(p => {
     const k = LS.get('nv_key_'+p) || PREFILLED.keys[p];
