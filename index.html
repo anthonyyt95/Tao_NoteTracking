@@ -198,8 +198,9 @@
       <div class="field-row">
         <label>Model</label>
         <select id="model-gemini">
-          <option value="gemini-1.5-pro">gemini-1.5-pro (best)</option>
-          <option value="gemini-1.5-flash">gemini-1.5-flash (fast)</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash (best, free)</option>
+          <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (fastest, free)</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash (stable)</option>
         </select>
       </div>
       <div class="key-status" id="status-gemini">Enter your Google AI Studio API key</div>
@@ -353,21 +354,37 @@ function doGet(e) {
     gemini: { label: 'Gemini', badgeClass: 'badge-gemini', aiBadgeClass: 'ai-gemini' }
   };
 
-  // Pre-filled credentials — safely decode only non-empty strings
+  // Pre-filled credentials (safe if repo is private)
   const ENCODED = {
     claude:  '',
     openai:  'c2stcHJvai00WVU4UmkzZ0x4MG1idXduaUFDM3BBU2FqRzFlN0V5SW9IMWJDNDhiNVdocmJmREI1OGNZazlMUzhpNWFCUXVjMVI3dFI3TFp2a1QzQmxia0ZKVGxGc295cnM1VGlUdkF3YXk0R2NDWmN6NVc0SEw0dDc5Y09WZUp3UEp3dmxvbG5PSHZBMlByV1B1aWc4eHZiRUNqbUJXVk1TY0E=',
     gemini:  'QUl6YVN5QWZEV1VteGxYZHFJZHdXcV9fUHp6R2JnOGY2V19SODhz',
   };
-
+  
   const PREFILLED = {
     keys: {
-      claude:  ENCODED.claude  ? atob(ENCODED.claude)  : '',
-      openai:  ENCODED.openai  ? atob(ENCODED.openai)  : '',
-      gemini:  ENCODED.gemini  ? atob(ENCODED.gemini)  : '',
+      claude:  atob(ENCODED.claude),
+      openai:  atob(ENCODED.openai),
+      gemini:  atob(ENCODED.gemini)
     },
     webhook: 'https://script.google.com/macros/s/AKfycbx4UDLi3oVBQqGdXr4db8dnV188TqHpm37s4_GnNkI6pH5KNeg-o1MWZNjjeikcJypN/exec'
   };
+
+
+  // Init
+  ['claude','openai','gemini'].forEach(p => {
+    const k = LS.get('nv_key_'+p) || PREFILLED.keys[p];
+    if (k) { document.getElementById('key-'+p).value = k; setKeyStatus(p,'loaded'); }
+    const m = LS.get('nv_model_'+p);
+    if (m) { const s = document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
+  });
+  const wh = LS.get('nv_webhook') || PREFILLED.webhook;
+  if (wh) {
+    document.getElementById('webhookUrl').value = wh;
+    setWebhookStatus('ok');
+    loadFromSheets();
+  }
+  updateProviderBadge();
 
   function setKeyStatus(p, state) {
     const el = document.getElementById('status-'+p);
@@ -638,21 +655,6 @@ If no action items use an empty array. Be thorough and accurate.`;
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
-  // Init — runs after all functions are defined
-  ['claude','openai','gemini'].forEach(p => {
-    const k = LS.get('nv_key_'+p) || PREFILLED.keys[p];
-    if (k) { document.getElementById('key-'+p).value = k; setKeyStatus(p,'loaded'); }
-    const m = LS.get('nv_model_'+p);
-    if (m) { const s = document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
-  });
-  const wh = LS.get('nv_webhook') || PREFILLED.webhook;
-  if (wh) {
-    document.getElementById('webhookUrl').value = wh;
-    setWebhookStatus('ok');
-    loadFromSheets();
-  }
-  updateProviderBadge();
 </script>
 </body>
 </html>
