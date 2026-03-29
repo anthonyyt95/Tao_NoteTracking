@@ -57,16 +57,30 @@
   .webhook-status { font-size: 0.72rem; color: var(--ink-faint); }
   .webhook-status.ok { color: var(--accent); } .webhook-status.err { color: var(--red); }
 
-  .capture-zone { background: var(--paper-warm); border: 1.5px dashed var(--paper-line); border-radius: var(--radius); overflow: hidden; position: relative; min-height: 240px; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-  .capture-zone:hover { border-color: var(--accent-mid); background: #f0f7f4; }
-  .capture-zone.has-image { border-style: solid; border-color: var(--accent-mid); }
-  #preview { width: 100%; max-height: 320px; object-fit: contain; border-radius: var(--radius); display: none; }
-  .capture-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem; pointer-events: none; }
-  .camera-icon { width: 52px; height: 52px; background: white; border-radius: 50%; border: 1px solid var(--paper-line); display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem; }
-  .camera-icon svg { width: 24px; height: 24px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
-  .capture-placeholder h3 { font-size: 0.95rem; font-weight: 500; }
-  .capture-placeholder p { font-size: 0.78rem; color: var(--ink-faint); text-align: center; max-width: 200px; line-height: 1.5; }
-  input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  /* Image source buttons */
+  .capture-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .btn-capture { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1.5px dashed var(--paper-line); background: var(--paper-warm); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden; }
+  .btn-capture:hover { border-color: var(--accent-mid); background: #f0f7f4; }
+  .btn-capture input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .btn-capture svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 1.5; flex-shrink: 0; }
+
+  /* Image preview + lasso canvas */
+  .image-workspace { display: none; background: var(--paper-warm); border: 1.5px solid var(--accent-mid); border-radius: var(--radius); overflow: hidden; position: relative; }
+  .image-workspace.visible { display: block; }
+  .workspace-inner { position: relative; display: inline-block; width: 100%; }
+  #preview { width: 100%; max-height: 380px; object-fit: contain; display: block; border-radius: var(--radius); }
+  #lassoCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; border-radius: var(--radius); touch-action: none; }
+  .lasso-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--paper-warm); border-top: 1px solid var(--paper-line); gap: 8px; flex-wrap: wrap; }
+  .lasso-hint { font-size: 0.75rem; color: var(--ink-faint); flex: 1; }
+  .lasso-hint.active { color: var(--accent); font-weight: 500; }
+  .lasso-actions { display: flex; gap: 6px; }
+  .lasso-btn { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--paper-line); background: white; color: var(--ink); cursor: pointer; transition: background 0.15s; }
+  .lasso-btn:hover { background: var(--paper-warm); }
+  .lasso-btn.confirm { background: var(--accent); color: white; border-color: var(--accent); }
+  .lasso-btn.confirm:hover { background: #235a40; }
+  .lasso-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .crop-preview-badge { position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: var(--accent); color: white; pointer-events: none; display: none; }
+  .crop-preview-badge.visible { display: block; }
 
   .active-provider-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; pointer-events: none; }
   .badge-claude { background: #fef3e8; color: #c17b4e; border: 1px solid #f0d5bb; }
@@ -265,18 +279,35 @@ function doGet(e) {
     <button class="close-btn" onclick="toggleGuide()">Close guide</button>
   </div>
 
-  <!-- Capture Zone -->
-  <div class="capture-zone" id="captureZone">
-    <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFile(event)" />
-    <img id="preview" alt="Note preview" />
-    <div class="capture-placeholder" id="placeholder">
-      <div class="camera-icon">
-        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </div>
-      <h3>Photograph your notes</h3>
-      <p>Tap to open camera or choose from library</p>
+  <!-- Image Source Buttons -->
+  <div class="capture-btns">
+    <button class="btn-capture" id="cameraBtn">
+      <input type="file" id="fileCamera" accept="image/*" capture="environment" onchange="handleFile(event)" />
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Camera
+    </button>
+    <button class="btn-capture" id="libraryBtn">
+      <input type="file" id="fileLibrary" accept="image/*" onchange="handleFile(event)" />
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Library
+    </button>
+  </div>
+
+  <!-- Image Workspace + Lasso -->
+  <div class="image-workspace" id="imageWorkspace">
+    <div class="workspace-inner" id="workspaceInner">
+      <img id="preview" alt="Note preview" />
+      <canvas id="lassoCanvas"></canvas>
+      <div class="crop-preview-badge" id="cropBadge">Region selected</div>
+      <div class="active-provider-badge badge-claude" id="providerBadge">Claude</div>
     </div>
-    <div class="active-provider-badge badge-claude" id="providerBadge">Claude</div>
+    <div class="lasso-toolbar">
+      <span class="lasso-hint" id="lassoHint">Draw around a region to crop, or scan the full image</span>
+      <div class="lasso-actions">
+        <button class="lasso-btn" id="clearLassoBtn" onclick="clearLasso()" disabled>Clear selection</button>
+        <button class="lasso-btn confirm" id="confirmCropBtn" onclick="confirmCrop()" disabled>Crop to selection</button>
+      </div>
+    </div>
   </div>
 
   <!-- Action Buttons -->
@@ -366,24 +397,18 @@ function doGet(e) {
     try { return xorCrypt(atob(encrypted), password); } catch { return ''; }
   }
 
-  // Encrypted credentials — paste your xorEncrypt() output here
+  // Encrypted credentials — run xorEncrypt() in console, paste result here
+  // To generate: btoa(str.split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0)^pwd.charCodeAt(i%pwd.length))).join(''))
   const ENCRYPTED = {
-    claude:  'OV9OChkcHBVDR3oHThkdBgE7YEAsd1U7Tg1ILkJhDk4MIEQlBExDRglgAV46JmAOBmQ/ZQsuB1gBDV1AGWMCGCckBhBCWhBcEh8jP348d30lA1MNHjxDJF1EZ0AuAQ0cADtUAyhgDyEoKXA1',   // paste encrypted Claude key here
+    claude:  '',   // paste encrypted Claude key here
     webhook: ''    // paste encrypted webhook URL here (optional)
   };
-
   const WEBHOOK_PLAINTEXT = 'https://script.google.com/macros/s/AKfycbx4UDLi3oVBQqGdXr4db8dnV188TqHpm37s4_GnNkI6pH5KNeg-o1MWZNjjeikcJypN/exec';
 
-  // Password prompt — shown once per session, remembered in sessionStorage
   function unlockVault() {
-    // If already unlocked this session, skip prompt
     const sessionPwd = sessionStorage.getItem('nv_pwd');
     if (sessionPwd) { initWithPassword(sessionPwd); return; }
-
-    // If no encrypted keys set, init without password
     if (!ENCRYPTED.claude && !ENCRYPTED.webhook) { initWithPassword(''); return; }
-
-    // Show custom password overlay
     const overlay = document.createElement('div');
     overlay.id = 'vaultOverlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:999;padding:2rem;';
@@ -396,7 +421,7 @@ function doGet(e) {
         style="font-family:var(--sans);font-size:0.9rem;font-weight:500;padding:10px 28px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;width:100%;max-width:280px;">
         Unlock
       </button>
-      <p id="pwdError" style="font-size:0.78rem;color:var(--red);display:none;">Wrong password — key didn't decrypt correctly.</p>
+      <p id="pwdError" style="font-size:0.78rem;color:var(--red);display:none;">Wrong password — key did not decrypt correctly.</p>
     `;
     document.body.appendChild(overlay);
     document.getElementById('vaultPwd').addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword(); });
@@ -405,7 +430,6 @@ function doGet(e) {
   function submitPassword() {
     const pwd = document.getElementById('vaultPwd').value;
     if (!pwd) return;
-    // Test decryption — a valid Claude key always starts with sk-ant-
     if (ENCRYPTED.claude) {
       const test = decrypt(ENCRYPTED.claude, pwd);
       if (!test.startsWith('sk-ant-')) {
@@ -423,7 +447,6 @@ function doGet(e) {
   function initWithPassword(pwd) {
     const claudeKey = ENCRYPTED.claude ? decrypt(ENCRYPTED.claude, pwd) : '';
     const webhookKey = ENCRYPTED.webhook ? decrypt(ENCRYPTED.webhook, pwd) : WEBHOOK_PLAINTEXT;
-
     ['claude','openai','gemini'].forEach(p => {
       const stored = LS.get('nv_key_'+p);
       const prefill = p === 'claude' ? claudeKey : '';
@@ -432,7 +455,6 @@ function doGet(e) {
       const m = LS.get('nv_model_'+p);
       if (m) { const s = document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
     });
-
     const wh = LS.get('nv_webhook') || webhookKey;
     if (wh) {
       document.getElementById('webhookUrl').value = wh;
@@ -487,34 +509,183 @@ function doGet(e) {
 
   function toggleGuide() { document.getElementById('setupGuide').classList.toggle('visible'); }
 
+  // ── Lasso / freehand crop state ──────────────────────────────
+  let lassoPoints = [];
+  let isDrawing = false;
+  let originalImageB64 = null;   // full image before any crop
+  let originalMimeType = 'image/jpeg';
+  let croppedB64 = null;         // cropped region (if selected)
+
   function handleFile(e) {
     const file = e.target.files[0]; if (!file) return;
     currentMimeType = file.type || 'image/jpeg';
+    originalMimeType = currentMimeType;
     const reader = new FileReader();
     reader.onload = ev => {
-      currentImageB64 = ev.target.result.split(',')[1];
+      const dataUrl = ev.target.result;
+      originalImageB64 = dataUrl.split(',')[1];
+      currentImageB64 = originalImageB64;
+      croppedB64 = null;
       const preview = document.getElementById('preview');
-      preview.src = ev.target.result; preview.style.display='block';
-      document.getElementById('placeholder').style.display='none';
-      document.getElementById('captureZone').classList.add('has-image');
+      preview.src = dataUrl;
+      preview.onload = () => {
+        setupLassoCanvas();
+        clearLasso();
+      };
+      document.getElementById('imageWorkspace').classList.add('visible');
       document.getElementById('scanBtn').disabled=false;
       document.getElementById('resultCard').classList.remove('visible');
       document.getElementById('saveBtn').disabled=true;
+      document.getElementById('cropBadge').classList.remove('visible');
       currentResult=null;
+      // reset file inputs so same file can be re-selected
+      document.getElementById('fileCamera').value='';
+      document.getElementById('fileLibrary').value='';
     };
     reader.readAsDataURL(file);
   }
 
+  function setupLassoCanvas() {
+    const preview = document.getElementById('preview');
+    const canvas = document.getElementById('lassoCanvas');
+    canvas.width = preview.offsetWidth;
+    canvas.height = preview.offsetHeight;
+    canvas.onmousedown = startDraw;
+    canvas.onmousemove = draw;
+    canvas.onmouseup = endDraw;
+    canvas.ontouchstart = e => { e.preventDefault(); startDraw(e.touches[0]); };
+    canvas.ontouchmove = e => { e.preventDefault(); draw(e.touches[0]); };
+    canvas.ontouchend = e => { e.preventDefault(); endDraw(); };
+  }
+
+  function getPos(e) {
+    const canvas = document.getElementById('lassoCanvas');
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function startDraw(e) {
+    isDrawing = true;
+    lassoPoints = [];
+    const pos = getPos(e);
+    lassoPoints.push(pos);
+    const ctx = document.getElementById('lassoCanvas').getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+    const pos = getPos(e);
+    lassoPoints.push(pos);
+    const canvas = document.getElementById('lassoCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // draw filled lasso shape
+    ctx.beginPath();
+    ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+    lassoPoints.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.fillStyle = 'rgba(45,106,79,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#52b788';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.stroke();
+  }
+
+  function endDraw() {
+    if (!isDrawing || lassoPoints.length < 5) { isDrawing = false; return; }
+    isDrawing = false;
+    // close path visually
+    const canvas = document.getElementById('lassoCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+    lassoPoints.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(45,106,79,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#52b788';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.stroke();
+    // enable crop buttons
+    document.getElementById('clearLassoBtn').disabled = false;
+    document.getElementById('confirmCropBtn').disabled = false;
+    document.getElementById('lassoHint').textContent = 'Selection drawn — confirm crop or clear to redraw';
+    document.getElementById('lassoHint').classList.add('active');
+  }
+
+  function clearLasso() {
+    lassoPoints = [];
+    isDrawing = false;
+    croppedB64 = null;
+    currentImageB64 = originalImageB64;
+    const canvas = document.getElementById('lassoCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    document.getElementById('clearLassoBtn').disabled = true;
+    document.getElementById('confirmCropBtn').disabled = true;
+    document.getElementById('cropBadge').classList.remove('visible');
+    document.getElementById('lassoHint').textContent = 'Draw around a region to crop, or scan the full image';
+    document.getElementById('lassoHint').classList.remove('active');
+  }
+
+  function confirmCrop() {
+    if (lassoPoints.length < 3) return;
+    const preview = document.getElementById('preview');
+    const canvas = document.getElementById('lassoCanvas');
+    // Scale lasso points from display coords to actual image coords
+    const scaleX = preview.naturalWidth / preview.offsetWidth;
+    const scaleY = preview.naturalHeight / preview.offsetHeight;
+    const scaled = lassoPoints.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
+    // Get bounding box of lasso in image space
+    const xs = scaled.map(p => p.x);
+    const ys = scaled.map(p => p.y);
+    const minX = Math.max(0, Math.floor(Math.min(...xs)));
+    const minY = Math.max(0, Math.floor(Math.min(...ys)));
+    const maxX = Math.min(preview.naturalWidth, Math.ceil(Math.max(...xs)));
+    const maxY = Math.min(preview.naturalHeight, Math.ceil(Math.max(...ys)));
+    const cropW = maxX - minX;
+    const cropH = maxY - minY;
+    if (cropW < 10 || cropH < 10) { showToast('Selection too small', 'error'); return; }
+    // Draw the full image onto an offscreen canvas, clip to lasso path, then crop to bounding box
+    const offscreen = document.createElement('canvas');
+    offscreen.width = cropW;
+    offscreen.height = cropH;
+    const ctx = offscreen.getContext('2d');
+    // Clip to lasso path (translated to bounding box origin)
+    ctx.beginPath();
+    ctx.moveTo(scaled[0].x - minX, scaled[0].y - minY);
+    scaled.forEach(p => ctx.lineTo(p.x - minX, p.y - minY));
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(preview, -minX, -minY, preview.naturalWidth, preview.naturalHeight);
+    croppedB64 = offscreen.toDataURL('image/jpeg', 0.92).split(',')[1];
+    currentImageB64 = croppedB64;
+    currentMimeType = 'image/jpeg';
+    // Show crop preview badge, hide lasso canvas
+    document.getElementById('cropBadge').classList.add('visible');
+    document.getElementById('confirmCropBtn').disabled = true;
+    document.getElementById('lassoHint').textContent = 'Cropped region ready — hit Scan & Organize';
+    // Briefly flash the preview with the crop
+    const ctx2 = canvas.getContext('2d');
+    ctx2.clearRect(0, 0, canvas.width, canvas.height);
+    showToast('Region cropped ✓', 'success');
+  }
+
   function clearAll() {
-    document.getElementById('preview').style.display='none';
-    document.getElementById('placeholder').style.display='flex';
-    document.getElementById('captureZone').classList.remove('has-image');
+    document.getElementById('imageWorkspace').classList.remove('visible');
     document.getElementById('scanBtn').disabled=true;
     document.getElementById('saveBtn').disabled=true;
     document.getElementById('resultCard').classList.remove('visible');
     document.getElementById('processing').classList.remove('visible');
-    document.getElementById('fileInput').value='';
-    currentImageB64=null; currentResult=null;
+    document.getElementById('fileCamera').value='';
+    document.getElementById('fileLibrary').value='';
+    currentImageB64=null; originalImageB64=null; croppedB64=null;
+    currentResult=null;
+    clearLasso();
   }
 
   const PROMPT = `You are a smart notes organizer. Analyze this image of handwritten or typed notes and return ONLY a valid JSON object — no markdown fences, no explanation — with exactly these fields:
@@ -712,7 +883,6 @@ If no action items use an empty array. Be thorough and accurate.`;
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // Start the app — triggers password prompt if encrypted keys are set
   unlockVault();
 </script>
 </body>
