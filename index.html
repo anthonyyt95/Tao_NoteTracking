@@ -34,10 +34,8 @@
   .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
   .provider-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .dot-claude { background: #c17b4e; } .dot-openai { background: #10a37f; } .dot-gemini { background: #4285f4; }
-
   .tab-panel { display: none; padding: 1rem 1.25rem; flex-direction: column; gap: 10px; }
   .tab-panel.active { display: flex; }
-
   .field-row { display: flex; gap: 8px; align-items: center; }
   .field-row label { font-size: 0.72rem; font-weight: 500; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; min-width: 56px; }
   .field-row input, .field-row select { flex: 1; font-family: var(--mono); font-size: 0.8rem; padding: 7px 10px; border: 1px solid var(--paper-line); border-radius: var(--radius-sm); background: var(--paper-warm); color: var(--ink); outline: none; transition: border-color 0.2s; }
@@ -47,7 +45,6 @@
   .save-key-btn:hover { background: var(--paper-warm); }
   .key-status { font-size: 0.72rem; color: var(--ink-faint); }
   .key-status.ok { color: var(--accent); } .key-status.err { color: var(--red); }
-
   .webhook-panel { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--paper-line); }
   .webhook-panel label { font-size: 0.72rem; font-weight: 500; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
   .webhook-panel input { width: 100%; font-family: var(--mono); font-size: 0.78rem; padding: 7px 10px; border: 1px solid var(--paper-line); border-radius: var(--radius-sm); background: var(--paper-warm); color: var(--ink); outline: none; transition: border-color 0.2s; }
@@ -57,35 +54,42 @@
   .webhook-status { font-size: 0.72rem; color: var(--ink-faint); }
   .webhook-status.ok { color: var(--accent); } .webhook-status.err { color: var(--red); }
 
-  /* Image source buttons */
+  .active-provider-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; pointer-events: none; z-index: 2; }
+  .badge-claude { background: #fef3e8; color: #c17b4e; border: 1px solid #f0d5bb; }
+  .badge-openai { background: #e6f7f2; color: #0d7a5f; border: 1px solid #a8e0d0; }
+  .badge-gemini { background: var(--blue-light); color: var(--blue); border: 1px solid #b8d0f5; }
+
+  /* Image input area */
+  .image-input-area { display: flex; flex-direction: column; gap: 0.75rem; }
+  .drop-zone { background: var(--paper-warm); border: 1.5px dashed var(--paper-line); border-radius: var(--radius); min-height: 110px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.35rem; padding: 1.25rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent-mid); background: #f0f7f4; }
+  .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-zone svg { width: 26px; height: 26px; stroke: var(--accent-mid); fill: none; stroke-width: 1.5; margin-bottom: 2px; }
+  .drop-zone h3 { font-size: 0.875rem; font-weight: 500; color: var(--ink); }
+  .drop-zone p { font-size: 0.75rem; color: var(--ink-faint); }
   .capture-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-  .btn-capture { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1.5px dashed var(--paper-line); background: var(--paper-warm); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden; }
+  .btn-capture { font-family: var(--sans); font-size: 0.88rem; font-weight: 500; padding: 0.72rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--paper-line); background: white; color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden; }
   .btn-capture:hover { border-color: var(--accent-mid); background: #f0f7f4; }
   .btn-capture input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .btn-capture svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 1.5; flex-shrink: 0; }
+  .btn-capture svg { width: 17px; height: 17px; stroke: var(--accent); fill: none; stroke-width: 1.5; flex-shrink: 0; }
 
-  /* Image preview + lasso canvas */
+  /* Image workspace + lasso */
   .image-workspace { display: none; background: var(--paper-warm); border: 1.5px solid var(--accent-mid); border-radius: var(--radius); overflow: hidden; position: relative; }
   .image-workspace.visible { display: block; }
-  .workspace-inner { position: relative; display: inline-block; width: 100%; }
-  #preview { width: 100%; max-height: 380px; object-fit: contain; display: block; border-radius: var(--radius); }
-  #lassoCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; border-radius: var(--radius); touch-action: none; }
+  .workspace-inner { position: relative; display: block; width: 100%; line-height: 0; }
+  #preview { width: 100%; max-height: 380px; object-fit: contain; display: block; border-radius: var(--radius) var(--radius) 0 0; }
+  #lassoCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+  .crop-badge { position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: var(--accent); color: white; pointer-events: none; display: none; z-index: 2; }
+  .crop-badge.visible { display: block; }
   .lasso-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--paper-warm); border-top: 1px solid var(--paper-line); gap: 8px; flex-wrap: wrap; }
-  .lasso-hint { font-size: 0.75rem; color: var(--ink-faint); flex: 1; }
+  .lasso-hint { font-size: 0.75rem; color: var(--ink-faint); flex: 1; line-height: 1.4; }
   .lasso-hint.active { color: var(--accent); font-weight: 500; }
-  .lasso-actions { display: flex; gap: 6px; }
-  .lasso-btn { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--paper-line); background: white; color: var(--ink); cursor: pointer; transition: background 0.15s; }
+  .lasso-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .lasso-btn { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--paper-line); background: white; color: var(--ink); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
   .lasso-btn:hover { background: var(--paper-warm); }
   .lasso-btn.confirm { background: var(--accent); color: white; border-color: var(--accent); }
   .lasso-btn.confirm:hover { background: #235a40; }
   .lasso-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .crop-preview-badge { position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: var(--accent); color: white; pointer-events: none; display: none; }
-  .crop-preview-badge.visible { display: block; }
-
-  .active-provider-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; pointer-events: none; }
-  .badge-claude { background: #fef3e8; color: #c17b4e; border: 1px solid #f0d5bb; }
-  .badge-openai { background: #e6f7f2; color: #0d7a5f; border: 1px solid #a8e0d0; }
-  .badge-gemini { background: var(--blue-light); color: var(--blue); border: 1px solid #b8d0f5; }
 
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
   .btn { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s, opacity 0.15s; }
@@ -152,7 +156,7 @@
   @media (prefers-color-scheme: dark) {
     :root { --ink:#f0ede4; --ink-soft:#b5b0a4; --ink-faint:#6e6a62; --paper:#1a1915; --paper-warm:#201e1a; --paper-line:#2e2c27; --accent-light:#0d2b1d; --amber-light:#291e10; --blue-light:#0d1a2e; }
     .settings-card,.result-card,.repo-item,.setup-guide { background:#201e1a; }
-    .btn-secondary,.save-key-btn { background:#201e1a; }
+    .btn-secondary,.save-key-btn,.btn-capture,.lasso-btn { background:#201e1a; }
   }
 </style>
 </head>
@@ -182,8 +186,8 @@
       <div class="field-row">
         <label>Model</label>
         <select id="model-claude">
-          <option value="claude-opus-4-5">claude-opus-4-5 (best)</option>
-          <option value="claude-sonnet-4-5">claude-sonnet-4-5 (fast)</option>
+          <option value="claude-sonnet-4-5">claude-sonnet-4-5 (recommended)</option>
+          <option value="claude-opus-4-5">claude-opus-4-5 (best quality)</option>
           <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (fastest)</option>
         </select>
       </div>
@@ -222,7 +226,6 @@
       <div class="key-status" id="status-gemini">Enter your Google AI Studio API key</div>
     </div>
 
-    <!-- Webhook always visible -->
     <div class="webhook-panel">
       <label>Google Sheets Webhook URL</label>
       <input type="url" id="webhookUrl" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" oninput="saveWebhook()" />
@@ -233,11 +236,11 @@
     </div>
   </div>
 
-  <!-- Collapsible Apps Script setup guide -->
+  <!-- Setup guide -->
   <div class="setup-guide" id="setupGuide">
     <h3>Google Sheets setup (2 minutes)</h3>
     <ol>
-      <li>Open <a href="https://sheets.google.com" target="_blank">Google Sheets</a>, create a new spreadsheet. Copy its ID from the URL (the long string between <code>/d/</code> and <code>/edit</code>).</li>
+      <li>Open <a href="https://sheets.google.com" target="_blank">Google Sheets</a>, create a new spreadsheet. Copy its ID from the URL (long string between <code>/d/</code> and <code>/edit</code>).</li>
       <li>Open <a href="https://script.google.com" target="_blank">script.google.com</a> → New project → paste this:</li>
     </ol>
 <pre>const SHEET_ID = 'YOUR_SPREADSHEET_ID';
@@ -245,7 +248,6 @@
 function doPost(e) {
   const sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
   const d = JSON.parse(e.postData.contents);
-  // Add headers on first row if empty
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(['Timestamp','Title','Category','Tags',
       'Summary','Extracted Text','Action Items','AI Provider']);
@@ -272,39 +274,49 @@ function doGet(e) {
 }</pre>
     <ol start="3">
       <li>Replace <code>YOUR_SPREADSHEET_ID</code> with your Sheet ID.</li>
-      <li>Click <strong>Deploy → New deployment → Web app</strong>. Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em>. Authorize when prompted.</li>
+      <li>Click <strong>Deploy → New deployment → Web app</strong>. Set <em>Execute as: Me</em>, <em>Who has access: Anyone</em>. Authorize when prompted.</li>
       <li>Copy the deployment URL → paste into the Webhook URL field above.</li>
-      <li>Each time you redeploy (after edits), create a <strong>new deployment</strong> — the URL changes. Update the field.</li>
+      <li>Each time you redeploy after edits, create a <strong>new deployment</strong> — the URL changes.</li>
     </ol>
     <button class="close-btn" onclick="toggleGuide()">Close guide</button>
   </div>
 
-  <!-- Image Source Buttons -->
-  <div class="capture-btns">
-    <button class="btn-capture" id="cameraBtn">
-      <input type="file" id="fileCamera" accept="image/*" capture="environment" onchange="handleFile(event)" />
-      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      Camera
-    </button>
-    <button class="btn-capture" id="libraryBtn">
-      <input type="file" id="fileLibrary" accept="image/*" onchange="handleFile(event)" />
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      Library
-    </button>
+  <!-- Image input area -->
+  <div class="image-input-area">
+    <!-- Drag & drop -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileDropInput" accept="image/*" onchange="handleFile(event)" />
+      <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      <h3>Drop an image here</h3>
+      <p>or tap to browse files</p>
+    </div>
+    <!-- Camera + Library -->
+    <div class="capture-btns">
+      <button class="btn-capture">
+        <input type="file" id="fileCamera" accept="image/*" capture="environment" onchange="handleFile(event)" />
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Camera
+      </button>
+      <button class="btn-capture">
+        <input type="file" id="fileLibrary" accept="image/*" onchange="handleFile(event)" />
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Photo Library
+      </button>
+    </div>
   </div>
 
-  <!-- Image Workspace + Lasso -->
+  <!-- Image workspace + freehand lasso -->
   <div class="image-workspace" id="imageWorkspace">
-    <div class="workspace-inner" id="workspaceInner">
+    <div class="workspace-inner">
       <img id="preview" alt="Note preview" />
       <canvas id="lassoCanvas"></canvas>
-      <div class="crop-preview-badge" id="cropBadge">Region selected</div>
+      <div class="crop-badge" id="cropBadge">Region selected</div>
       <div class="active-provider-badge badge-claude" id="providerBadge">Claude</div>
     </div>
     <div class="lasso-toolbar">
       <span class="lasso-hint" id="lassoHint">Draw around a region to crop, or scan the full image</span>
       <div class="lasso-actions">
-        <button class="lasso-btn" id="clearLassoBtn" onclick="clearLasso()" disabled>Clear selection</button>
+        <button class="lasso-btn" id="clearLassoBtn" onclick="clearLasso()" disabled>Clear</button>
         <button class="lasso-btn confirm" id="confirmCropBtn" onclick="confirmCrop()" disabled>Crop to selection</button>
       </div>
     </div>
@@ -380,6 +392,9 @@ function doGet(e) {
   let currentResult = null;
   let currentImageB64 = null;
   let currentMimeType = 'image/jpeg';
+  let originalImageB64 = null;
+  let lassoPoints = [];
+  let isDrawing = false;
 
   const PROVIDERS = {
     claude: { label: 'Claude', badgeClass: 'badge-claude', aiBadgeClass: 'ai-claude' },
@@ -387,28 +402,33 @@ function doGet(e) {
     gemini: { label: 'Gemini', badgeClass: 'badge-gemini', aiBadgeClass: 'ai-gemini' }
   };
 
-  // XOR encryption helpers
-  function xorCrypt(str, password) {
-    return str.split('').map((c, i) =>
-      String.fromCharCode(c.charCodeAt(0) ^ password.charCodeAt(i % password.length))
+  // ── Encryption helpers ───────────────────────────────────────────
+  // To generate an encrypted key, run once in your browser console:
+  //   function xorEncrypt(str,pwd){return btoa(str.split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0)^pwd.charCodeAt(i%pwd.length))).join(''));}
+  //   xorEncrypt('sk-ant-YOUR_KEY', 'your-password')
+  // Paste the result into ENCRYPTED.claude below.
+  function xorCrypt(str, pwd) {
+    return str.split('').map((c,i) =>
+      String.fromCharCode(c.charCodeAt(0) ^ pwd.charCodeAt(i % pwd.length))
     ).join('');
   }
-  function decrypt(encrypted, password) {
-    try { return xorCrypt(atob(encrypted), password); } catch { return ''; }
+  function decrypt(enc, pwd) {
+    try { return xorCrypt(atob(enc), pwd); } catch { return ''; }
   }
 
-  // Encrypted credentials — run xorEncrypt() in console, paste result here
-  // To generate: btoa(str.split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0)^pwd.charCodeAt(i%pwd.length))).join(''))
   const ENCRYPTED = {
-    claude:  '',   // paste encrypted Claude key here
-    webhook: ''    // paste encrypted webhook URL here (optional)
+    claude:  'OV9OChkcHBVDR3oHThkdBgE7YEAsd1U7Tg1ILkJhDk4MIEQlBExDRglgAV46JmAOBmQ/ZQsuB1gBDV1AGWMCGCckBhBCWhBcEh8jP348d30lA1MNHjxDJF1EZ0AuAQ0cADtUAyhgDyEoKXA1',   // ← paste your xorEncrypt() output here
+    webhook: ''    // ← optionally encrypt your webhook URL too
   };
   const WEBHOOK_PLAINTEXT = 'https://script.google.com/macros/s/AKfycbx4UDLi3oVBQqGdXr4db8dnV188TqHpm37s4_GnNkI6pH5KNeg-o1MWZNjjeikcJypN/exec';
 
+  // ── Vault unlock ─────────────────────────────────────────────────
   function unlockVault() {
-    const sessionPwd = sessionStorage.getItem('nv_pwd');
-    if (sessionPwd) { initWithPassword(sessionPwd); return; }
+    const cached = sessionStorage.getItem('nv_pwd');
+    if (cached) { initWithPassword(cached); return; }
+    // No encrypted keys set — skip prompt entirely
     if (!ENCRYPTED.claude && !ENCRYPTED.webhook) { initWithPassword(''); return; }
+
     const overlay = document.createElement('div');
     overlay.id = 'vaultOverlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:999;padding:2rem;';
@@ -424,7 +444,7 @@ function doGet(e) {
       <p id="pwdError" style="font-size:0.78rem;color:var(--red);display:none;">Wrong password — key did not decrypt correctly.</p>
     `;
     document.body.appendChild(overlay);
-    document.getElementById('vaultPwd').addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword(); });
+    document.getElementById('vaultPwd').addEventListener('keydown', e => { if (e.key==='Enter') submitPassword(); });
   }
 
   function submitPassword() {
@@ -445,16 +465,16 @@ function doGet(e) {
   }
 
   function initWithPassword(pwd) {
-    const claudeKey = ENCRYPTED.claude ? decrypt(ENCRYPTED.claude, pwd) : '';
+    const claudeKey  = ENCRYPTED.claude  ? decrypt(ENCRYPTED.claude,  pwd) : '';
     const webhookKey = ENCRYPTED.webhook ? decrypt(ENCRYPTED.webhook, pwd) : WEBHOOK_PLAINTEXT;
+
     ['claude','openai','gemini'].forEach(p => {
-      const stored = LS.get('nv_key_'+p);
-      const prefill = p === 'claude' ? claudeKey : '';
-      const k = stored || prefill;
+      const k = LS.get('nv_key_'+p) || (p==='claude' ? claudeKey : '');
       if (k) { document.getElementById('key-'+p).value = k; setKeyStatus(p,'loaded'); }
       const m = LS.get('nv_model_'+p);
-      if (m) { const s = document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
+      if (m) { const s=document.getElementById('model-'+p); if([...s.options].some(o=>o.value===m)) s.value=m; }
     });
+
     const wh = LS.get('nv_webhook') || webhookKey;
     if (wh) {
       document.getElementById('webhookUrl').value = wh;
@@ -464,18 +484,18 @@ function doGet(e) {
     updateProviderBadge();
   }
 
+  // ── UI helpers ───────────────────────────────────────────────────
   function setKeyStatus(p, state) {
     const el = document.getElementById('status-'+p);
     if (state==='loaded') { el.textContent='API key loaded ✓'; el.className='key-status ok'; }
     else if (state==='saved') { el.textContent='API key saved ✓'; el.className='key-status ok'; }
-    else if (state==='err') { el.textContent='Invalid key format'; el.className='key-status err'; }
+    else { el.textContent='Invalid key format'; el.className='key-status err'; }
   }
   function setWebhookStatus(state) {
     const el = document.getElementById('webhookStatus');
     if (state==='ok') { el.textContent='Webhook URL saved ✓'; el.className='webhook-status ok'; }
     else { el.textContent='Required — notes are saved here'; el.className='webhook-status'; }
   }
-
   function switchTab(p) {
     currentProvider = p;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -484,147 +504,129 @@ function doGet(e) {
     document.getElementById('panel-'+p).classList.add('active');
     updateProviderBadge();
   }
-
   function updateProviderBadge() {
     const b = document.getElementById('providerBadge');
     const p = PROVIDERS[currentProvider];
     b.textContent = p.label;
     b.className = 'active-provider-badge ' + p.badgeClass;
   }
-
   function saveProviderKey(p) {
     const key = document.getElementById('key-'+p).value.trim();
     if (!key) { showToast('Enter a key first','error'); return; }
     LS.set('nv_key_'+p, key);
     LS.set('nv_model_'+p, document.getElementById('model-'+p).value);
     setKeyStatus(p,'saved');
-    showToast(PROVIDERS[p].label + ' key saved','success');
+    showToast(PROVIDERS[p].label+' key saved','success');
   }
-
   function saveWebhook() {
     const url = document.getElementById('webhookUrl').value.trim();
     LS.set('nv_webhook', url);
     if (url) setWebhookStatus('ok'); else setWebhookStatus('');
   }
-
   function toggleGuide() { document.getElementById('setupGuide').classList.toggle('visible'); }
 
-  // ── Lasso / freehand crop state ──────────────────────────────
-  let lassoPoints = [];
-  let isDrawing = false;
-  let originalImageB64 = null;   // full image before any crop
-  let originalMimeType = 'image/jpeg';
-  let croppedB64 = null;         // cropped region (if selected)
+  // ── Drag and drop ────────────────────────────────────────────────
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadImageFile(file);
+  });
 
+  // ── File handling ────────────────────────────────────────────────
   function handleFile(e) {
     const file = e.target.files[0]; if (!file) return;
+    loadImageFile(file);
+    e.target.value = '';
+  }
+
+  function loadImageFile(file) {
     currentMimeType = file.type || 'image/jpeg';
-    originalMimeType = currentMimeType;
     const reader = new FileReader();
     reader.onload = ev => {
       const dataUrl = ev.target.result;
       originalImageB64 = dataUrl.split(',')[1];
       currentImageB64 = originalImageB64;
-      croppedB64 = null;
       const preview = document.getElementById('preview');
       preview.src = dataUrl;
-      preview.onload = () => {
-        setupLassoCanvas();
-        clearLasso();
-      };
+      preview.onload = () => { setupLassoCanvas(); clearLasso(); };
       document.getElementById('imageWorkspace').classList.add('visible');
-      document.getElementById('scanBtn').disabled=false;
-      document.getElementById('resultCard').classList.remove('visible');
-      document.getElementById('saveBtn').disabled=true;
       document.getElementById('cropBadge').classList.remove('visible');
-      currentResult=null;
-      // reset file inputs so same file can be re-selected
-      document.getElementById('fileCamera').value='';
-      document.getElementById('fileLibrary').value='';
+      document.getElementById('scanBtn').disabled = false;
+      document.getElementById('resultCard').classList.remove('visible');
+      document.getElementById('saveBtn').disabled = true;
+      currentResult = null;
     };
     reader.readAsDataURL(file);
   }
 
+  // ── Freehand lasso ───────────────────────────────────────────────
   function setupLassoCanvas() {
     const preview = document.getElementById('preview');
     const canvas = document.getElementById('lassoCanvas');
-    canvas.width = preview.offsetWidth;
+    canvas.width  = preview.offsetWidth;
     canvas.height = preview.offsetHeight;
     canvas.onmousedown = startDraw;
     canvas.onmousemove = draw;
-    canvas.onmouseup = endDraw;
+    canvas.onmouseup   = endDraw;
     canvas.ontouchstart = e => { e.preventDefault(); startDraw(e.touches[0]); };
-    canvas.ontouchmove = e => { e.preventDefault(); draw(e.touches[0]); };
-    canvas.ontouchend = e => { e.preventDefault(); endDraw(); };
+    canvas.ontouchmove  = e => { e.preventDefault(); draw(e.touches[0]); };
+    canvas.ontouchend   = e => { e.preventDefault(); endDraw(); };
   }
 
   function getPos(e) {
-    const canvas = document.getElementById('lassoCanvas');
-    const rect = canvas.getBoundingClientRect();
+    const rect = document.getElementById('lassoCanvas').getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
   function startDraw(e) {
-    isDrawing = true;
-    lassoPoints = [];
-    const pos = getPos(e);
-    lassoPoints.push(pos);
+    isDrawing = true; lassoPoints = [];
+    lassoPoints.push(getPos(e));
     const ctx = document.getElementById('lassoCanvas').getContext('2d');
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   }
 
   function draw(e) {
     if (!isDrawing) return;
-    const pos = getPos(e);
-    lassoPoints.push(pos);
-    const canvas = document.getElementById('lassoCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // draw filled lasso shape
-    ctx.beginPath();
-    ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
-    lassoPoints.forEach(p => ctx.lineTo(p.x, p.y));
-    ctx.fillStyle = 'rgba(45,106,79,0.15)';
-    ctx.fill();
-    ctx.strokeStyle = '#52b788';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 3]);
-    ctx.stroke();
+    lassoPoints.push(getPos(e));
+    redrawLasso(false);
   }
 
   function endDraw() {
     if (!isDrawing || lassoPoints.length < 5) { isDrawing = false; return; }
     isDrawing = false;
-    // close path visually
-    const canvas = document.getElementById('lassoCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.beginPath();
-    ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
-    lassoPoints.forEach(p => ctx.lineTo(p.x, p.y));
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(45,106,79,0.15)';
-    ctx.fill();
-    ctx.strokeStyle = '#52b788';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 3]);
-    ctx.stroke();
-    // enable crop buttons
+    redrawLasso(true);
     document.getElementById('clearLassoBtn').disabled = false;
     document.getElementById('confirmCropBtn').disabled = false;
     document.getElementById('lassoHint').textContent = 'Selection drawn — confirm crop or clear to redraw';
     document.getElementById('lassoHint').classList.add('active');
   }
 
+  function redrawLasso(close) {
+    const canvas = document.getElementById('lassoCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (lassoPoints.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+    lassoPoints.forEach(p => ctx.lineTo(p.x, p.y));
+    if (close) ctx.closePath();
+    ctx.fillStyle = 'rgba(45,106,79,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#52b788';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5,3]);
+    ctx.stroke();
+  }
+
   function clearLasso() {
-    lassoPoints = [];
-    isDrawing = false;
-    croppedB64 = null;
+    lassoPoints = []; isDrawing = false;
     currentImageB64 = originalImageB64;
     const canvas = document.getElementById('lassoCanvas');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
     document.getElementById('clearLassoBtn').disabled = true;
     document.getElementById('confirmCropBtn').disabled = true;
     document.getElementById('cropBadge').classList.remove('visible');
@@ -635,59 +637,44 @@ function doGet(e) {
   function confirmCrop() {
     if (lassoPoints.length < 3) return;
     const preview = document.getElementById('preview');
-    const canvas = document.getElementById('lassoCanvas');
-    // Scale lasso points from display coords to actual image coords
-    const scaleX = preview.naturalWidth / preview.offsetWidth;
+    const scaleX = preview.naturalWidth  / preview.offsetWidth;
     const scaleY = preview.naturalHeight / preview.offsetHeight;
-    const scaled = lassoPoints.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
-    // Get bounding box of lasso in image space
-    const xs = scaled.map(p => p.x);
-    const ys = scaled.map(p => p.y);
+    const scaled = lassoPoints.map(p => ({ x: p.x*scaleX, y: p.y*scaleY }));
+    const xs = scaled.map(p=>p.x), ys = scaled.map(p=>p.y);
     const minX = Math.max(0, Math.floor(Math.min(...xs)));
     const minY = Math.max(0, Math.floor(Math.min(...ys)));
-    const maxX = Math.min(preview.naturalWidth, Math.ceil(Math.max(...xs)));
+    const maxX = Math.min(preview.naturalWidth,  Math.ceil(Math.max(...xs)));
     const maxY = Math.min(preview.naturalHeight, Math.ceil(Math.max(...ys)));
-    const cropW = maxX - minX;
-    const cropH = maxY - minY;
-    if (cropW < 10 || cropH < 10) { showToast('Selection too small', 'error'); return; }
-    // Draw the full image onto an offscreen canvas, clip to lasso path, then crop to bounding box
-    const offscreen = document.createElement('canvas');
-    offscreen.width = cropW;
-    offscreen.height = cropH;
-    const ctx = offscreen.getContext('2d');
-    // Clip to lasso path (translated to bounding box origin)
+    const w = maxX-minX, h = maxY-minY;
+    if (w < 10 || h < 10) { showToast('Selection too small','error'); return; }
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const ctx = off.getContext('2d');
     ctx.beginPath();
-    ctx.moveTo(scaled[0].x - minX, scaled[0].y - minY);
-    scaled.forEach(p => ctx.lineTo(p.x - minX, p.y - minY));
-    ctx.closePath();
-    ctx.clip();
+    ctx.moveTo(scaled[0].x-minX, scaled[0].y-minY);
+    scaled.forEach(p => ctx.lineTo(p.x-minX, p.y-minY));
+    ctx.closePath(); ctx.clip();
     ctx.drawImage(preview, -minX, -minY, preview.naturalWidth, preview.naturalHeight);
-    croppedB64 = offscreen.toDataURL('image/jpeg', 0.92).split(',')[1];
-    currentImageB64 = croppedB64;
+    currentImageB64 = off.toDataURL('image/jpeg', 0.92).split(',')[1];
     currentMimeType = 'image/jpeg';
-    // Show crop preview badge, hide lasso canvas
     document.getElementById('cropBadge').classList.add('visible');
     document.getElementById('confirmCropBtn').disabled = true;
     document.getElementById('lassoHint').textContent = 'Cropped region ready — hit Scan & Organize';
-    // Briefly flash the preview with the crop
-    const ctx2 = canvas.getContext('2d');
-    ctx2.clearRect(0, 0, canvas.width, canvas.height);
-    showToast('Region cropped ✓', 'success');
+    document.getElementById('lassoCanvas').getContext('2d').clearRect(0,0,9999,9999);
+    showToast('Region cropped ✓','success');
   }
 
   function clearAll() {
     document.getElementById('imageWorkspace').classList.remove('visible');
-    document.getElementById('scanBtn').disabled=true;
-    document.getElementById('saveBtn').disabled=true;
+    document.getElementById('scanBtn').disabled = true;
+    document.getElementById('saveBtn').disabled = true;
     document.getElementById('resultCard').classList.remove('visible');
     document.getElementById('processing').classList.remove('visible');
-    document.getElementById('fileCamera').value='';
-    document.getElementById('fileLibrary').value='';
-    currentImageB64=null; originalImageB64=null; croppedB64=null;
-    currentResult=null;
+    currentImageB64 = null; originalImageB64 = null; currentResult = null;
     clearLasso();
   }
 
+  // ── AI scanning ──────────────────────────────────────────────────
   const PROMPT = `You are a smart notes organizer. Analyze this image of handwritten or typed notes and return ONLY a valid JSON object — no markdown fences, no explanation — with exactly these fields:
 {"title":"concise descriptive title (5-8 words)","category":"one of: Study, Work, Ideas, Personal, To-Do, Meeting, Research, Journal, Other","tags":["tag1","tag2","tag3"],"summary":"2-3 sentence summary of the main content and key points","extracted_text":"full verbatim text from the image preserving line breaks","action_items":["item1","item2"]}
 If no action items use an empty array. Be thorough and accurate.`;
@@ -699,13 +686,13 @@ If no action items use an empty array. Be thorough and accurate.`;
 
     const model = document.getElementById('model-'+currentProvider).value;
     document.getElementById('processing').classList.add('visible');
-    document.getElementById('scanBtn').disabled=true;
+    document.getElementById('scanBtn').disabled = true;
     document.getElementById('resultCard').classList.remove('visible');
 
-    const steps=['Extracting text from your notes...','Identifying structure and topics...','Generating summary and tags...'];
-    let si=0;
-    document.getElementById('processingMsg').textContent=steps[0];
-    const iv=setInterval(()=>{document.getElementById('processingMsg').textContent=steps[++si%steps.length];},2200);
+    const steps = ['Extracting text from your notes...','Identifying structure and topics...','Generating summary and tags...'];
+    let si = 0;
+    document.getElementById('processingMsg').textContent = steps[0];
+    const iv = setInterval(()=>{ document.getElementById('processingMsg').textContent=steps[++si%steps.length]; }, 2200);
 
     try {
       let result;
@@ -716,19 +703,17 @@ If no action items use an empty array. Be thorough and accurate.`;
       clearInterval(iv);
       result.scanned_at = new Date().toISOString();
       result.id = Date.now().toString();
-      result.ai_provider = PROVIDERS[currentProvider].label + ' / ' + model;
+      result.ai_provider = PROVIDERS[currentProvider].label+' / '+model;
       currentResult = result;
-
       renderResult(result);
       document.getElementById('processing').classList.remove('visible');
       document.getElementById('resultCard').classList.add('visible');
-      document.getElementById('saveBtn').disabled=false;
-      document.getElementById('scanBtn').disabled=false;
-
+      document.getElementById('saveBtn').disabled = false;
+      document.getElementById('scanBtn').disabled = false;
     } catch(err) {
       clearInterval(iv);
       document.getElementById('processing').classList.remove('visible');
-      document.getElementById('scanBtn').disabled=false;
+      document.getElementById('scanBtn').disabled = false;
       showToast('Error: '+err.message,'error');
     }
   }
@@ -775,28 +760,24 @@ If no action items use an empty array. Be thorough and accurate.`;
     return JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim());
   }
 
+  // ── Render & save ────────────────────────────────────────────────
   function renderResult(r) {
     document.getElementById('resultTitle').textContent = r.title||'Untitled Note';
     document.getElementById('resultSummary').textContent = r.summary||'';
     document.getElementById('resultText').textContent = r.extracted_text||'';
     const dt=new Date(r.scanned_at);
     document.getElementById('resultDate').textContent = dt.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-
     const meta=document.getElementById('resultMeta'); meta.innerHTML='';
     if(r.category){const c=document.createElement('span');c.className='category-badge';c.textContent=r.category;meta.appendChild(c);}
     (r.tags||[]).forEach(tag=>{const t=document.createElement('span');t.className='tag';t.textContent='#'+tag;meta.appendChild(t);});
-
     const aiBadge=document.getElementById('resultAiBadge');
     const provKey=Object.keys(PROVIDERS).find(k=>(r.ai_provider||'').toLowerCase().includes(k))||currentProvider;
     aiBadge.textContent=r.ai_provider||PROVIDERS[currentProvider].label;
     aiBadge.className='ai-badge '+PROVIDERS[provKey].aiBadgeClass;
-
     const actions=r.action_items||[];
     const sec=document.getElementById('actionSection');
-    if(actions.length){
-      document.getElementById('resultActions').innerHTML=actions.map(a=>`<li>${escapeHtml(a)}</li>`).join('');
-      sec.style.display='block';
-    } else { sec.style.display='none'; }
+    if(actions.length){ document.getElementById('resultActions').innerHTML=actions.map(a=>`<li>${escapeHtml(a)}</li>`).join(''); sec.style.display='block'; }
+    else { sec.style.display='none'; }
   }
 
   async function saveToSheets() {
@@ -805,24 +786,18 @@ If no action items use an empty array. Be thorough and accurate.`;
     if (!currentResult){showToast('No result to save','error');return;}
     document.getElementById('saveBtn').disabled=true;
     try {
-      await fetch(url,{
-        method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
+      await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           title:currentResult.title, category:currentResult.category,
           tags:(currentResult.tags||[]).join(', '),
-          summary:currentResult.summary,
-          extracted_text:currentResult.extracted_text,
+          summary:currentResult.summary, extracted_text:currentResult.extracted_text,
           action_items:(currentResult.action_items||[]).join(' | '),
-          scanned_at:currentResult.scanned_at,
-          ai_provider:currentResult.ai_provider
+          scanned_at:currentResult.scanned_at, ai_provider:currentResult.ai_provider
         })
       });
       showToast('Saved to Google Sheets ✓','success');
-      setTimeout(loadFromSheets, 1200);
-    } catch(e) {
-      showToast('Could not reach webhook — check URL','error');
-    }
+      setTimeout(loadFromSheets,1200);
+    } catch(e) { showToast('Could not reach webhook — check URL','error'); }
     document.getElementById('saveBtn').disabled=false;
   }
 
@@ -836,10 +811,7 @@ If no action items use an empty array. Be thorough and accurate.`;
       if (!res.ok) throw new Error('bad response');
       const notes=await res.json();
       document.getElementById('noteCount').textContent=notes.length+' note'+(notes.length!==1?'s':'');
-      if (!notes.length){
-        list.innerHTML='<div class="empty-state">No notes yet.<br>Scan and save a note to get started.</div>';
-        return;
-      }
+      if (!notes.length){ list.innerHTML='<div class="empty-state">No notes yet.<br>Scan and save a note to get started.</div>'; return; }
       const reversed=[...notes].reverse();
       window._sheetNotes=reversed;
       list.innerHTML=reversed.map((n,i)=>`
@@ -850,11 +822,8 @@ If no action items use an empty array. Be thorough and accurate.`;
             ${String(n.tags||'').split(',').filter(Boolean).slice(0,3).map(t=>`<span class="tag" style="font-size:10px;">#${escapeHtml(t.trim())}</span>`).join('')}
             <span class="repo-item-date">${n.scanned_at?new Date(n.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}</span>
           </div>
-        </div>
-      `).join('');
-    } catch {
-      list.innerHTML='<div class="empty-state">Could not load from Sheets.<br>Check webhook URL and Apps Script deployment.</div>';
-    }
+        </div>`).join('');
+    } catch { list.innerHTML='<div class="empty-state">Could not load from Sheets.<br>Check webhook URL and Apps Script deployment.</div>'; }
   }
 
   function viewSheetNote(idx) {
@@ -866,23 +835,22 @@ If no action items use an empty array. Be thorough and accurate.`;
       action_items:String(n.action_items||'').split('|').map(s=>s.trim()).filter(Boolean),
       scanned_at:n.scanned_at, ai_provider:n.ai_provider
     };
-    currentResult=r;
-    renderResult(r);
+    currentResult=r; renderResult(r);
     document.getElementById('resultCard').classList.add('visible');
     document.getElementById('saveBtn').disabled=true;
     document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
-  function showToast(msg, type='') {
+  function showToast(msg,type='') {
     const t=document.getElementById('toast');
     t.textContent=msg; t.className='toast '+type+' show';
     setTimeout(()=>t.className='toast '+type,3200);
   }
-
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // Start — shows password prompt if ENCRYPTED.claude is set, otherwise loads directly
   unlockVault();
 </script>
 </body>
